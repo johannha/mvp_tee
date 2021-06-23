@@ -1,5 +1,7 @@
 import argparse
 import json
+import time
+import hashlib
 
 # -------------------------- Command Line Arguments -------------------------- #
 
@@ -25,8 +27,20 @@ def checkArg():
 
 
 class Batch:
-    def __init__(self, data):
-        self.data = [data]
+    data = []
+    hashPrep = ""
+
+
+def writeJSON(content):
+    with open(("./output/" + str(x) + ".json"), "x") as ex:
+        ex.write(content)
+
+# TODO implement hash function
+
+
+def hashBatch(valueChain):
+    encoded = valueChain.encode()
+    result = hashlib.sha256(encoded).hexdigest()
 
 
 # ----------------------------------- Main ----------------------------------- #
@@ -41,8 +55,35 @@ if __name__ == "__main__":
 
     # read JSON workload
     with open("data_sample_2020-07-01.json", "r") as workload:
-        json_array = json.load(workload)
-        print(json_array[1])  # remove after usage
 
-        # create Batch
-        for x in range(args.batchesTotal):
+        json_array = json.load(workload)
+
+        dataIndex = 0
+        tempBatch = Batch()
+
+        for x in range(int(args.batchesTotal)):
+
+            # create Batch
+            for y in range(int(args.batchSize)):
+                tempBatch.data.append(json_array[dataIndex])
+
+                # append values to hashPrep
+                for value in json_array[dataIndex].values():
+                    tempBatch.hashPrep = tempBatch.hashPrep + str(value)
+                dataIndex += 1
+            # hashValues()
+
+            # create JSON object
+            tempJSON = json.dumps(tempBatch.data)
+
+            # write to Output Directory
+            # writeJSON(tempJSON)
+
+            print("HashPrep Value of this batch" + tempBatch.hashPrep)
+            tempBatch.data = []
+            tempBatch.hashPrep = ""
+
+            # add delay to get desired throughput
+            time.sleep(60/int(args.throughput))
+            print("Number of batch: " + str(x))
+            print("Index Number: " + str(dataIndex))
