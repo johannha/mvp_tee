@@ -3,6 +3,8 @@ import json
 import time
 import hashlib
 
+# Example call: "python3 workgen.py -s 5 -a 3 -t 60" --> generates 3 batches, containing 5 objects with a throughput of 60 batches/min
+
 # -------------------------- Command Line Arguments -------------------------- #
 
 
@@ -18,10 +20,15 @@ def checkArg():
                             help="Amount of total Batches")
         parser.add_argument("-t", "--throughput", help="Throughput of batches")
 
-        return parser.parse_args()
+        args = parser.parse_args()
 
-    except:
-        print("Problem with input parameters")
+        if(int(args.batchSize) <= 0 or int(args.batchesTotal) <= 0 or int(args.throughput) <= 0):
+            raise ValueError("Input parameters must be greater than 0")
+
+        return args
+
+    except Exception as error:
+        print("Problem with input parameters: " + repr(error))
 
 # -------------------------- Command Line Arguments -------------------------- #
 
@@ -29,18 +36,23 @@ def checkArg():
 class Batch:
     data = []
     hashPrep = ""
+    resultHash = ""
 
 
-def writeJSON(content):
+def writeJSON(data, hash):
+
+    batchConstruct = [{"hash": hash}, {"data": data}]
+
+    tempJSON = json.dumps(batchConstruct, indent=4)
+
     with open(("./output/" + str(x) + ".json"), "x") as ex:
-        ex.write(content)
-
-# TODO implement hash function
+        ex.write(tempJSON)
 
 
 def hashBatch(valueChain):
     encoded = valueChain.encode()
     result = hashlib.sha256(encoded).hexdigest()
+    return result
 
 
 # ----------------------------------- Main ----------------------------------- #
@@ -71,17 +83,17 @@ if __name__ == "__main__":
                 for value in json_array[dataIndex].values():
                     tempBatch.hashPrep = tempBatch.hashPrep + str(value)
                 dataIndex += 1
+
             # hashValues()
+            tempBatch.resultHash = hashBatch(tempBatch.hashPrep)
 
-            # create JSON object
-            tempJSON = json.dumps(tempBatch.data)
+            # creates full batch and writes it to direcory
+            writeJSON(tempBatch.data, tempBatch.resultHash)
 
-            # write to Output Directory
-            # writeJSON(tempJSON)
-
-            print("HashPrep Value of this batch" + tempBatch.hashPrep)
+            # clean tempBatch
             tempBatch.data = []
             tempBatch.hashPrep = ""
+            tempBatch.resultHash = ""
 
             # add delay to get desired throughput
             time.sleep(60/int(args.throughput))

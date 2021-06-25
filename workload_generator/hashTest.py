@@ -7,3 +7,6 @@ result = hashlib.sha256(encoded)
 
 print("Resultat direkt nach der Funktion: ")
 print(result.hexdigest())
+
+decoded = hashlib.sha256()
+print
