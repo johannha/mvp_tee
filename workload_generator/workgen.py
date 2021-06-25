@@ -41,7 +41,7 @@ class Batch:
 
 def writeJSON(data, hash):
 
-    batchConstruct = [{"hash": hash}, {"data": data}]
+    batchConstruct = {"hash": hash, "data": data}
 
     tempJSON = json.dumps(batchConstruct, indent=4)
 
