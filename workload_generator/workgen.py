@@ -30,7 +30,6 @@ def checkArg():
     except Exception as error:
         print("Problem with input parameters: " + repr(error))
 
-# -------------------------- Command Line Arguments -------------------------- #
 
 
 class Batch:
