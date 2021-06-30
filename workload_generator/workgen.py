@@ -2,6 +2,7 @@ import argparse
 import json
 import time
 import hashlib
+from ecdsa import SigningKey, NIST256p
 
 # Example call: "python3 workgen.py -s 5 -a 3 -t 60" --> generates 3 batches, containing 5 objects with a throughput of 60 batches/min
 
@@ -31,16 +32,23 @@ def checkArg():
         print("Problem with input parameters: " + repr(error))
 
 
-
 class Batch:
     data = []
     hashPrep = ""
     resultHash = ""
+    signature = ""
 
 
-def writeJSON(data, hash):
+# keys
+signKey = "665345f0a9f342eaac09c209161d25de60233b77834b4db3ece0406758d00a54"
+verifyKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820"
 
-    batchConstruct = {"hash": hash, "data": data}
+signer = SigningKey.from_string(bytes.fromhex(signKey), curve=NIST256p)
+
+
+def writeJSON(data, hash, signature):
+
+    batchConstruct = {"hash": hash, "signature": signature, "data": data}
 
     tempJSON = json.dumps(batchConstruct, indent=4)
 
@@ -52,6 +60,10 @@ def hashBatch(valueChain):
     encoded = valueChain.encode()
     result = hashlib.sha256(encoded).hexdigest()
     return result
+
+
+def signHash(hash):
+    return signer.sign(bytes.fromhex(hash)).hex()
 
 
 # ----------------------------------- Main ----------------------------------- #
@@ -83,16 +95,21 @@ if __name__ == "__main__":
                     tempBatch.hashPrep = tempBatch.hashPrep + str(value)
                 dataIndex += 1
 
-            # hashValues()
+            # hash Values
             tempBatch.resultHash = hashBatch(tempBatch.hashPrep)
 
+            # sign hash
+            tempBatch.signature = signHash(tempBatch.resultHash)
+
             # creates full batch and writes it to direcory
-            writeJSON(tempBatch.data, tempBatch.resultHash)
+            writeJSON(tempBatch.data, tempBatch.resultHash,
+                      tempBatch.signature)
 
             # clean tempBatch
             tempBatch.data = []
             tempBatch.hashPrep = ""
             tempBatch.resultHash = ""
+            tempBatch.signature = ""
 
             # add delay to get desired throughput
             time.sleep(60/int(args.throughput))

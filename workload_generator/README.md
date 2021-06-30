@@ -2,6 +2,10 @@
 
 A push-based python script for creating workload batches. In current version the output is written directly in output directory.
 
+## Dependencies
+
+Run `pip3 install -r requirements.txt` to install dependencies
+
 ## Arguments
 
 | Name          | flag | Description                           |
