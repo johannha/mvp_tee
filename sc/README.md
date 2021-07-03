@@ -6,6 +6,10 @@ Compile and override: `truffle compile --all `
 
 Run migrations: `truffle migrate` (Ganache running before running migrate)
 
+`migrate --reset` to overrite
+
+Open console: `truffle console`
+
 Run migrations: `truffle develop`
 
 ## More information
