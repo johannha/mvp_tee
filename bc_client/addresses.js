@@ -5,4 +5,110 @@ const addresses = {
   4: "0x45C0947a8794612eFCC4Faeb881288dF7C9fB029",
 };
 
-export default addresses;
+const scAddresses = {
+  1: "0x14c214B9Bf330183854AbE7d5918815AC18360d5",
+};
+
+const abi = {
+  1: [
+    {
+      inputs: [],
+      payable: false,
+      stateMutability: "nonpayable",
+      type: "constructor",
+    },
+    {
+      constant: true,
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      name: "dataMap",
+      outputs: [
+        {
+          internalType: "string",
+          name: "_signature",
+          type: "string",
+        },
+        {
+          internalType: "uint16",
+          name: "_data",
+          type: "uint16",
+        },
+      ],
+      payable: false,
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      constant: true,
+      inputs: [],
+      name: "owner",
+      outputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address",
+        },
+      ],
+      payable: false,
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      constant: true,
+      inputs: [],
+      name: "testString",
+      outputs: [
+        {
+          internalType: "string",
+          name: "",
+          type: "string",
+        },
+      ],
+      payable: false,
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      constant: false,
+      inputs: [
+        {
+          internalType: "string",
+          name: "_signature",
+          type: "string",
+        },
+        {
+          internalType: "uint16",
+          name: "_data",
+          type: "uint16",
+        },
+      ],
+      name: "addData",
+      outputs: [],
+      payable: false,
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      constant: false,
+      inputs: [
+        {
+          internalType: "string",
+          name: "_input",
+          type: "string",
+        },
+      ],
+      name: "setString",
+      outputs: [],
+      payable: false,
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+  ],
+};
+
+export { abi, scAddresses, addresses };
