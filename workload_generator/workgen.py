@@ -2,6 +2,9 @@ import argparse
 import json
 import time
 import hashlib
+
+from six import indexbytes
+import rawData_pb2
 from ecdsa import SigningKey, NIST256p
 
 # Example call: "python3 workgen.py -s 5 -a 3 -t 60" --> generates 3 batches, containing 5 objects with a throughput of 60 batches/min
@@ -32,13 +35,6 @@ def checkArg():
         print("Problem with input parameters: " + repr(error))
 
 
-class Batch:
-    data = []
-    hashPrep = ""
-    resultHash = ""
-    signature = ""
-
-
 # keys
 signKey = "665345f0a9f342eaac09c209161d25de60233b77834b4db3ece0406758d00a54"
 verifyKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820"
@@ -46,14 +42,14 @@ verifyKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351
 signer = SigningKey.from_string(bytes.fromhex(signKey), curve=NIST256p)
 
 
-def writeJSON(data, hash, signature):
+def serialize(batch):
 
-    batchConstruct = {"hash": hash, "signature": signature, "data": data}
+    print(batch)
 
-    tempJSON = json.dumps(batchConstruct, indent=4)
+    result = batch.SerializeToString()
 
-    with open(("./output/" + str(x) + ".json"), "x") as ex:
-        ex.write(tempJSON)
+    with open(("./output/" + str(x)), "wb") as ex:
+        ex.write(result)
 
 
 def hashBatch(valueChain):
@@ -76,40 +72,51 @@ if __name__ == "__main__":
         args.throughput,
     ))
 
+    hashPrep = ""
+
     # read JSON workload
     with open("data_sample_2020-07-01.json", "r") as workload:
 
         json_array = json.load(workload)
 
         dataIndex = 0
-        tempBatch = Batch()
 
         for x in range(int(args.batchesTotal)):
 
+            tempBatch = rawData_pb2.rawData()
+
             # create Batch
             for y in range(int(args.batchSize)):
-                tempBatch.data.append(json_array[dataIndex])
+
+                tempData = rawData_pb2.IoTData()
+
+                tempData.MId = (json_array[dataIndex].get('MId'))
+                tempData.IDur = (json_array[dataIndex].get('IDur'))
+                tempData.IEnd = (json_array[dataIndex].get('IEnd'))
+                tempData.PAvg = (json_array[dataIndex].get('PAvg'))
+                tempData.EIn = (json_array[dataIndex].get('EIn'))
+                tempData.EOut = (json_array[dataIndex].get('EOut'))
+
+                tempBatch.data.append(tempData)
 
                 # append values to hashPrep
                 for value in json_array[dataIndex].values():
-                    tempBatch.hashPrep = tempBatch.hashPrep + str(value)
+                    hashPrep = hashPrep + str(value)
                 dataIndex += 1
 
             # hash Values
-            tempBatch.resultHash = hashBatch(tempBatch.hashPrep)
+            tempBatch.hash = hashBatch(hashPrep)
 
             # sign hash
-            tempBatch.signature = signHash(tempBatch.resultHash)
+            tempBatch.signature = signHash(tempBatch.hash)
 
             # creates full batch and writes it to direcory
-            writeJSON(tempBatch.data, tempBatch.resultHash,
-                      tempBatch.signature)
+            serialize(tempBatch)
 
             # clean tempBatch
-            tempBatch.data = []
-            tempBatch.hashPrep = ""
-            tempBatch.resultHash = ""
-            tempBatch.signature = ""
+            hashPrep = ""
+            tempBatch = None
+            tempData = None
 
             # add delay to get desired throughput
             time.sleep(60/int(args.throughput))

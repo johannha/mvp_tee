@@ -27,3 +27,12 @@ Clear output folder:
 ```
 python3 deleteOutput.py
 ```
+
+## Compile Protobuf
+
+SRC_DIR="/Users/johannHartmann\ 1/Documents/Code/mvp_tee/workload_generator"
+DST_DIR="/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/python"
+
+```
+./protoc -I=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin  --python_out=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/python /Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/rawData.proto
+```
