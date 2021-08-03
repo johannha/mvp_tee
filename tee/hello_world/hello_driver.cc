@@ -17,6 +17,8 @@
  */
 
 #include <iostream>
+#include <fstream>
+#include <sys/stat.h>
 #include <string>
 #include <vector>
 
@@ -30,21 +32,21 @@
 #include "hello_world/hello.pb.h"
 
 ABSL_FLAG(std::string, enclave_path, "", "Path to enclave to load");
-ABSL_FLAG(std::string, words, "",
-          "A comma-separated list of words to pass to the enclave");
+// ABSL_FLAG(std::string, words, "",
+//           "A comma-separated list of words to pass to the enclave");
 
 int main(int argc, char *argv[])
 {
   // Part 0: Setup
   absl::ParseCommandLine(argc, argv);
 
-  if (absl::GetFlag(FLAGS_words).empty())
-  {
-    LOG(QFATAL) << "Must supply a non-empty list of words with --words";
-  }
+  // if (absl::GetFlag(FLAGS_words).empty())
+  // {
+  //   LOG(QFATAL) << "Must supply a non-empty list of words with --words";
+  // }
 
-  std::vector<std::string> words =
-      absl::StrSplit(absl::GetFlag(FLAGS_words), ',');
+  // std::vector<std::string> words =
+  //     absl::StrSplit(absl::GetFlag(FLAGS_words), ',');
 
   // Part 1: Initialization
   asylo::EnclaveManager::Configure(asylo::EnclaveManagerOptions());
@@ -80,29 +82,45 @@ int main(int argc, char *argv[])
 
   asylo::EnclaveClient *client = manager->GetClient("hello_enclave");
 
-  for (const auto &word : words)
+  // Load raw data
+  // struct stat stat_buf;
+  // if (stat("/wg/output/0.bin", &stat_buf) == 0)
+  // {
+  //   LOG(INFO) << "Binary size is: " << stat_buf.st_size << " Byte.";
+  //   bufferSize = stat_buf.st_size;
+  // }
+  // char buffer[bufferSize];
+  // ifstream myFile("/wg/output/0.bin", ios::in | ios::binary);
+  // myFile.read(buffer, bufferSize);
+
+  // myFile.close();
+
+  // input approach
+  asylo::EnclaveInput rawInput;
+
+  std::fstream input("/wg/output/0.bin", std::ios::in | std::ios::binary);
+  if (!input)
   {
-    asylo::EnclaveInput input;
-    input.MutableExtension(hello_world::enclave_input_hello)
-        ->set_to_count(word);
-
-    asylo::EnclaveOutput output;
-    status = client->EnterAndRun(input, &output);
-    if (!status.ok())
-    {
-      LOG(QFATAL) << "EnterAndRun failed: " << status;
-    }
-
-    if (!output.HasExtension(hello_world::enclave_output_hello))
-    {
-      LOG(QFATAL) << "Enclave did not assign an ID for " << word;
-    }
-
-    std::cout << "Message from enclave: "
-              << output.GetExtension(hello_world::enclave_output_hello)
-                     .counted_message()
-              << std::endl;
+    std::cout << "File not found.  Creating a new file." << std::endl;
   }
+  else if (!rawInput.MutableExtension(hello_world::parsed_input)->ParseFromIstream(&input))
+  {
+    std::cerr << "Failed to parse address book." << std::endl;
+    return -1;
+  }
+
+  asylo::EnclaveOutput output;
+
+  // send message
+  status = client->EnterAndRun(rawInput, &output);
+  if (!status.ok())
+  {
+    LOG(QFATAL) << "EnterAndRun failed: " << status;
+  }
+  std::cout << "Message from enclave: "
+            << output.GetExtension(hello_world::enclave_output_hello)
+                   .receivedhash()
+            << std::endl;
 
   // Part 3: Finalization
 

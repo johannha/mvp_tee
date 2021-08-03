@@ -17,6 +17,7 @@
  */
 
 #include <cstdint>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -24,6 +25,14 @@
 #include "asylo/util/logging.h"
 #include "asylo/util/status.h"
 #include "hello_world/hello.pb.h"
+
+std::string publicKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820";
+
+// batch signature verification
+bool verifySignature(std::string *hash, std::string *signature)
+{
+  return true;
+}
 
 class HelloApplication : public asylo::TrustedApplication
 {
@@ -33,23 +42,40 @@ public:
   asylo::Status Run(const asylo::EnclaveInput &input,
                     asylo::EnclaveOutput *output) override
   {
-    if (!input.HasExtension(hello_world::enclave_input_hello))
+    if (!input.HasExtension(hello_world::parsed_input))
     {
       return absl::InvalidArgumentError(
           "Expected a HelloInput extension on input.");
     }
-    std::string currentWord =
-        input.GetExtension(hello_world::enclave_input_hello).to_count();
+    // receiving Buffer
 
-    LOG(INFO) << "Counting on " << currentWord;
-    if (output)
+    std::string hash = input.GetExtension(hello_world::parsed_input).hash();
+    std::string signature = input.GetExtension(hello_world::parsed_input).signature();
+
+    if (verifySignature(&hash, &signature) == 1)
     {
-      LOG(INFO) << "Incrementing request counter...";
-      visitor_count_++;
-      output->MutableExtension(hello_world::enclave_output_hello)
-          ->set_counted_message(
-              absl::StrCat("The word ", currentWord, " has ", currentWord.length(), " bytes"));
+      int dataSize = input.GetExtension(hello_world::parsed_input).data_size();
+      std::string lengthInfo = "Length of data is " + std::to_string(dataSize);
+      if (output)
+      {
+        LOG(INFO) << "Incrementing request counter...";
+        visitor_count_++;
+        // threshold detection
+        for (int i = 0; i < dataSize; i++)
+        {
+          double power = input.GetExtension(hello_world::parsed_input).data(i).pavg();
+          if (power > 100)
+          {
+            LOG(INFO) << "Power is " << std::to_string(power);
+            //output->MutableExtension(hello_world::enclave_output_hello)->add_data(input.GetExtension(hello_world::parsed_input).data(i))
+          }
+        }
+
+        output->MutableExtension(hello_world::enclave_output_hello)
+            ->set_receivedhash(lengthInfo);
+      }
     }
+
     return absl::OkStatus();
   }
 

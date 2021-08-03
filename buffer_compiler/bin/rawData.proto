@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package wg;
+
+message IoTData {
+    optional string MId = 1;
+    optional string IDur = 2;
+    optional int64 IEnd = 3;
+    optional double PAvg = 4;
+    optional double EIn = 5;
+    optional double EOut = 6;
+}
+
+message rawData {
+    optional string hash = 1;
+    optional string signature = 2;
+    repeated IoTData data = 3; 
+}

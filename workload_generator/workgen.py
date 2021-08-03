@@ -48,7 +48,7 @@ def serialize(batch):
 
     result = batch.SerializeToString()
 
-    with open(("./output/" + str(x)), "wb") as ex:
+    with open(("./output/" + str(x) + ".bin"), "wb") as ex:
         ex.write(result)
 
 

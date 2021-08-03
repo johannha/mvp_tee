@@ -21,18 +21,33 @@ package hello_world;
 import "asylo/enclave.proto";
 
 // Extension to EnclaveInput for use with HelloWorld enclave.
-message HelloInput {
-  optional string to_count = 1;
+
+message IoTData {
+  optional string MId = 1;
+  optional string IDur = 2;
+  optional int64 IEnd = 3;
+  optional double PAvg = 4;
+  optional double EIn = 5;
+  optional double EOut = 6;
 }
 
-message HelloOutput {
-  optional string counted_message = 1;
+message rawData {
+  optional string hash = 1;
+  optional string signature = 2;
+  repeated IoTData data = 3; 
+}
+
+
+
+message ProcessedOutput {
+  optional string receivedHash = 1;
+  repeated IoTData data = 2;
 }
 
 extend asylo.EnclaveInput {
-  optional HelloInput enclave_input_hello = 8086;
+  optional rawData parsed_input = 8086;
 }
 
 extend asylo.EnclaveOutput {
-  optional HelloOutput enclave_output_hello = 8087;
+  optional ProcessedOutput enclave_output_hello = 8087;
 }
