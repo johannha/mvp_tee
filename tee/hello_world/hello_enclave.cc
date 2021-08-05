@@ -52,13 +52,13 @@ public:
     std::string hash = input.GetExtension(hello_world::parsed_input).hash();
     std::string signature = input.GetExtension(hello_world::parsed_input).signature();
 
+    // TODO: implement signature verification
+
     if (verifySignature(&hash, &signature) == 1)
     {
       int dataSize = input.GetExtension(hello_world::parsed_input).data_size();
-      std::string lengthInfo = "Length of data is " + std::to_string(dataSize);
       if (output)
       {
-        LOG(INFO) << "Incrementing request counter...";
         visitor_count_++;
         // threshold detection
         for (int i = 0; i < dataSize; i++)
@@ -66,13 +66,14 @@ public:
           double power = input.GetExtension(hello_world::parsed_input).data(i).pavg();
           if (power > 100)
           {
-            LOG(INFO) << "Power is " << std::to_string(power);
-            //output->MutableExtension(hello_world::enclave_output_hello)->add_data(input.GetExtension(hello_world::parsed_input).data(i))
+            // TODO: remote attestation
+            //LOG(INFO) << "Power is " << std::to_string(power);
+            // sets output message
+            output->MutableExtension(hello_world::enclave_output_hello)->add_mid(input.GetExtension(hello_world::parsed_input).data(i).mid());
+            output->MutableExtension(hello_world::enclave_output_hello)->add_pavg(power);
+            output->MutableExtension(hello_world::enclave_output_hello)->add_iend(input.GetExtension(hello_world::parsed_input).data(i).iend());
           }
         }
-
-        output->MutableExtension(hello_world::enclave_output_hello)
-            ->set_receivedhash(lengthInfo);
       }
     }
 

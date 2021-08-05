@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package c;
+
+message IoTData {
+    optional string MId = 1;
+    optional string IDur = 2;
+    optional int64 IEnd = 3;
+    optional double PAvg = 4;
+    optional double EIn = 5;
+    optional double EOut = 6;
+  }
+
+message EnclaveOutput {
+    optional string enclave_output_hello = 8087;
+    repeated IoTData data = 8088;
+  }

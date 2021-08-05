@@ -13,8 +13,9 @@ local path: /Users/johannHartmann 1/Documents/Code/mvp_tee/tee
 ```bash
 docker run -it --rm \
     -v bazel-cache:/root/.cache/bazel \
-    -v "${MY_PROJECT}":/opt/my-project \
+    -v "/Users/johannHartmann 1/Documents/Code/mvp_tee/tee":/opt/my-project \
     -v "/Users/johannhartmann 1/Documents/Code/mvp_tee/workload_generator/output":/wg/output \
+    -v "/Users/johannhartmann 1/Documents/Code/mvp_tee/tee/output":/tee/output \
     -w /opt/my-project \
     gcr.io/asylo-framework/asylo \
     bazel run //hello_world:hello_world_sgx_sim -- --words="Bürostuhl,Fensterbrett"

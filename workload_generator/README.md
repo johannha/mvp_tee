@@ -36,3 +36,9 @@ DST_DIR="/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/pyt
 ```
 ./protoc -I=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin  --python_out=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/python /Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/rawData.proto
 ```
+
+Compiling c++
+
+```
+./protoc -I=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin  --cpp_out=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/cpp /Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/dataC.proto
+```

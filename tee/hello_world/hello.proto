@@ -37,15 +37,26 @@ message rawData {
   repeated IoTData data = 3; 
 }
 
+message toClient {
+  optional string signature = 1;
+  optional string MId = 2;
+  optional double PAvg = 3;
+  optional int64 IEnd = 4;
+}
+
 
 
 message ProcessedOutput {
-  optional string receivedHash = 1;
-  repeated IoTData data = 2;
+  optional string signature = 1;
+  repeated string MId = 2;
+  repeated double PAvg = 3;
+  repeated int64 IEnd = 4;
 }
+
 
 extend asylo.EnclaveInput {
   optional rawData parsed_input = 8086;
+  optional toClient data_out = 8088;
 }
 
 extend asylo.EnclaveOutput {

@@ -82,45 +82,55 @@ int main(int argc, char *argv[])
 
   asylo::EnclaveClient *client = manager->GetClient("hello_enclave");
 
-  // Load raw data
-  // struct stat stat_buf;
-  // if (stat("/wg/output/0.bin", &stat_buf) == 0)
-  // {
-  //   LOG(INFO) << "Binary size is: " << stat_buf.st_size << " Byte.";
-  //   bufferSize = stat_buf.st_size;
-  // }
-  // char buffer[bufferSize];
-  // ifstream myFile("/wg/output/0.bin", ios::in | ios::binary);
-  // myFile.read(buffer, bufferSize);
-
-  // myFile.close();
-
   // input approach
   asylo::EnclaveInput rawInput;
-
-  std::fstream input("/wg/output/0.bin", std::ios::in | std::ios::binary);
-  if (!input)
-  {
-    std::cout << "File not found.  Creating a new file." << std::endl;
-  }
-  else if (!rawInput.MutableExtension(hello_world::parsed_input)->ParseFromIstream(&input))
-  {
-    std::cerr << "Failed to parse address book." << std::endl;
-    return -1;
-  }
-
+  asylo::EnclaveInput processedOutput;
   asylo::EnclaveOutput output;
+  int outputCounter = 0;
 
-  // send message
-  status = client->EnterAndRun(rawInput, &output);
-  if (!status.ok())
+  // TODO: event habdling for new incoming batches in folder
+
+  // iteration over input batches
+  for (int y = 0; y < 3; y++)
   {
-    LOG(QFATAL) << "EnterAndRun failed: " << status;
+    // reading binary from file
+    std::fstream input("/wg/output/" + std::to_string(y) + ".bin", std::ios::in | std::ios::binary);
+    if (!input)
+    {
+      std::cout << "File not found.  Creating a new file." << std::endl;
+    }
+    else if (!rawInput.MutableExtension(hello_world::parsed_input)->ParseFromIstream(&input))
+    {
+      std::cerr << "Failed to parse." << std::endl;
+      return -1;
+    }
+    // send message
+    status = client->EnterAndRun(rawInput, &output);
+    if (!status.ok())
+    {
+      LOG(QFATAL) << "EnterAndRun failed: " << status;
+    }
+
+    // forward preprocessed output
+    for (int z = 0; z < output.GetExtension(hello_world::enclave_output_hello).mid_size(); z++)
+    {
+      // set temp protobuf for serialization
+      rawInput.MutableExtension(hello_world::data_out)->set_signature("placeholder");
+      rawInput.MutableExtension(hello_world::data_out)->set_mid(output.GetExtension(hello_world::enclave_output_hello).mid(z));
+      rawInput.MutableExtension(hello_world::data_out)->set_pavg(output.GetExtension(hello_world::enclave_output_hello).pavg(z));
+      rawInput.MutableExtension(hello_world::data_out)->set_iend(output.GetExtension(hello_world::enclave_output_hello).iend(z));
+
+      std::cout << "Power is: " << output.GetExtension(hello_world::enclave_output_hello).pavg(z) << std::endl;
+
+      // write processed output to disk
+      std::fstream outputStream("/tee/output/" + std::to_string(outputCounter) + ".bin", std::ios::out | std::ios::trunc | std::ios::binary);
+      if (!rawInput.MutableExtension(hello_world::data_out)->SerializeToOstream(&outputStream))
+      {
+        std::cerr << "Failed to write processed data to disk." << std::endl;
+        return -1;
+      }
+    }
   }
-  std::cout << "Message from enclave: "
-            << output.GetExtension(hello_world::enclave_output_hello)
-                   .receivedhash()
-            << std::endl;
 
   // Part 3: Finalization
 
