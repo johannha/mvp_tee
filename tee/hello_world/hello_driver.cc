@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to write processed data to disk." << std::endl;
         return -1;
       }
+      outputCounter++;
     }
   }
 

@@ -42,3 +42,9 @@ Compiling c++
 ```
 ./protoc -I=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin  --cpp_out=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/cpp /Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/dataC.proto
 ```
+
+Compiling JS
+
+```
+./protoc -I=/Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin  --js_out=import_style=commonjs,binary:. /Users/johannHartmann\ 1/Documents/Code/mvp_tee/buffer_compiler/bin/dataJS.proto
+```

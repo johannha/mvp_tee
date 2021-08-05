@@ -8,7 +8,9 @@ contract Hellodata {
 
     struct DataBatch {
         string _signature;
-        uint16 _data; // value might be temperature in celsius stored as an int
+        string MId;
+        uint16 PAvg;
+        uint64 IEnd;
     }
 
     constructor() public {
@@ -17,8 +19,13 @@ contract Hellodata {
         testString = "constructed";
     }
 
-    function addData(string memory _signature, uint16 _data) public {
-        dataMap[_dataCount] = DataBatch(_signature, _data);
+    function addData(
+        string memory _signature,
+        string memory _MId,
+        uint16 _PAvg,
+        uint64 _IEnd
+    ) public {
+        dataMap[_dataCount] = DataBatch(_signature, _MId, _PAvg, _IEnd);
         _dataCount += 1;
     }
 

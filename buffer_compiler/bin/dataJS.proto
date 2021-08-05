@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package js;
+
+
+message teeData {
+    optional string signature = 1;
+    optional string MId = 2;
+    optional double PAvg = 3;
+    optional int64 IEnd = 4;
+}

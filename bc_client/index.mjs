@@ -1,6 +1,8 @@
 import express from "express";
-import { scAddresses, addresses, abi } from "./addresses.js";
+import { scAddresses, addresses, abi } from "./addresses.mjs";
+import dataJS from "./dataJS_pb.js";
 import Web3 from "web3";
+import * as fs from "fs";
 
 // set up express
 const client = express();
@@ -35,17 +37,28 @@ async function setString(value) {
     });
 }
 
-async function setData(signature, value) {
-  let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
-    from: addresses[1],
-    gas: 6721975,
-  });
-  contract.methods
-    .addData(signature, value)
-    .send({ from: addresses[1] })
-    .on("receipt", (hash) => {
-      console.log(hash);
-    });
+async function setData() {
+  //read from file
+  let rawData = fs.readFileSync("../tee/output/0.bin");
+  let parsedObject = dataJS.teeData.deserializeBinary(rawData);
+
+  let signature = parsedObject.getSignature();
+  let mid = parsedObject.getMid();
+  let pavg = parsedObject.getPavg();
+  let iend = parsedObject.getIend();
+
+  console.log("The received Power: " + parsedObject.getPavg());
+
+  // let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
+  //   from: addresses[1],
+  //   gas: 6721975,
+  // });
+  // contract.methods
+  //   .addData(signature, value)
+  //   .send({ from: addresses[1] })
+  //   .on("receipt", (hash) => {
+  //     console.log(hash);
+  //   });
 }
 
 async function readString() {
@@ -88,7 +101,7 @@ client.get("/set/string", (req, res) => {
 });
 
 client.get("/push/data", (req, res) => {
-  setData("jo", 23).then(() => res.send("New data added"));
+  setData().then(() => res.send("New data added"));
 });
 
 client.listen(port, () => {

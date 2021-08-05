@@ -2,16 +2,16 @@
   "name": "bc_client",
   "version": "1.0.0",
   "description": "A simple server that forwards TEE-preprocessed data to smart contract on Ethereum chain",
-  "main": "index.js",
-  "type": "module",
+  "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "node index.js"
+    "serve": "node index.mjs"
   },
   "author": "Johann Hartmann",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "google-protobuf": "^3.17.3",
     "web3": "^1.4.0",
     "web3-eth": "^1.4.0"
   }
