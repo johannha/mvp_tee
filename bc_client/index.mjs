@@ -44,21 +44,23 @@ async function setData() {
 
   let signature = parsedObject.getSignature();
   let mid = parsedObject.getMid();
-  let pavg = parsedObject.getPavg();
-  let iend = parsedObject.getIend();
+  let pavg = parseInt(parsedObject.getPavg());
+  let iend = parseInt(parsedObject.getIend());
 
   console.log("The received Power: " + parsedObject.getPavg());
+  console.log(typeof pavg);
 
-  // let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
-  //   from: addresses[1],
-  //   gas: 6721975,
-  // });
-  // contract.methods
-  //   .addData(signature, value)
-  //   .send({ from: addresses[1] })
-  //   .on("receipt", (hash) => {
-  //     console.log(hash);
-  //   });
+  // add to smart contract
+  let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
+    from: addresses[1],
+    gas: 6721975,
+  });
+  contract.methods
+    .addData(signature, mid, pavg, iend)
+    .send({ from: addresses[1] })
+    .on("receipt", (hash) => {
+      console.log(hash);
+    });
 }
 
 async function readString() {

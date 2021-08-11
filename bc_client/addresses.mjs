@@ -6,7 +6,7 @@ const addresses = {
 };
 
 const scAddresses = {
-  1: "0x14c214B9Bf330183854AbE7d5918815AC18360d5",
+  1: "0x60Fb88180F82DCeE4e4AD9ed1fc249533f4C0E71",
 };
 
 const abi = {
@@ -34,9 +34,19 @@ const abi = {
           type: "string",
         },
         {
+          internalType: "string",
+          name: "MId",
+          type: "string",
+        },
+        {
           internalType: "uint16",
-          name: "_data",
+          name: "PAvg",
           type: "uint16",
+        },
+        {
+          internalType: "uint64",
+          name: "IEnd",
+          type: "uint64",
         },
       ],
       payable: false,
@@ -82,9 +92,19 @@ const abi = {
           type: "string",
         },
         {
+          internalType: "string",
+          name: "_MId",
+          type: "string",
+        },
+        {
           internalType: "uint16",
-          name: "_data",
+          name: "_PAvg",
           type: "uint16",
+        },
+        {
+          internalType: "uint64",
+          name: "_IEnd",
+          type: "uint64",
         },
       ],
       name: "addData",

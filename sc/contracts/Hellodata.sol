@@ -1,17 +1,17 @@
 pragma solidity 0.5.16;
 
 contract Hellodata {
-    address public owner;
-    uint256 internal _dataCount;
-    string public testString;
-    mapping(uint256 => DataBatch) public dataMap;
-
     struct DataBatch {
         string _signature;
         string MId;
         uint16 PAvg;
         uint64 IEnd;
     }
+
+    address public owner;
+    uint256 internal _dataCount;
+    string public testString;
+    mapping(uint256 => DataBatch) public dataMap;
 
     constructor() public {
         owner = msg.sender;

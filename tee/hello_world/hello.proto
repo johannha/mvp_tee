@@ -44,8 +44,6 @@ message toClient {
   optional int64 IEnd = 4;
 }
 
-
-
 message ProcessedOutput {
   optional string signature = 1;
   repeated string MId = 2;

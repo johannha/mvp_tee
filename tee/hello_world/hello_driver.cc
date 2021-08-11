@@ -86,50 +86,61 @@ int main(int argc, char *argv[])
   asylo::EnclaveInput rawInput;
   asylo::EnclaveInput processedOutput;
   asylo::EnclaveOutput output;
+  int inputCounter = 0;
   int outputCounter = 0;
 
-  // TODO: event habdling for new incoming batches in folder
-
   // iteration over input batches
-  for (int y = 0; y < 3; y++)
+  while (1)
   {
-    // reading binary from file
-    std::fstream input("/wg/output/" + std::to_string(y) + ".bin", std::ios::in | std::ios::binary);
-    if (!input)
+    // break if 15 batches are created
+    if (inputCounter > 15)
     {
-      std::cout << "File not found.  Creating a new file." << std::endl;
+      break;
     }
-    else if (!rawInput.MutableExtension(hello_world::parsed_input)->ParseFromIstream(&input))
+    // check if file exists
+    if (access(("/wg/output/" + std::to_string(inputCounter) + ".bin").c_str(), F_OK) != -1)
     {
-      std::cerr << "Failed to parse." << std::endl;
-      return -1;
-    }
-    // send message
-    status = client->EnterAndRun(rawInput, &output);
-    if (!status.ok())
-    {
-      LOG(QFATAL) << "EnterAndRun failed: " << status;
-    }
+      std::cout << "File could be accessed" << std::endl;
 
-    // forward preprocessed output
-    for (int z = 0; z < output.GetExtension(hello_world::enclave_output_hello).mid_size(); z++)
-    {
-      // set temp protobuf for serialization
-      rawInput.MutableExtension(hello_world::data_out)->set_signature("placeholder");
-      rawInput.MutableExtension(hello_world::data_out)->set_mid(output.GetExtension(hello_world::enclave_output_hello).mid(z));
-      rawInput.MutableExtension(hello_world::data_out)->set_pavg(output.GetExtension(hello_world::enclave_output_hello).pavg(z));
-      rawInput.MutableExtension(hello_world::data_out)->set_iend(output.GetExtension(hello_world::enclave_output_hello).iend(z));
-
-      std::cout << "Power is: " << output.GetExtension(hello_world::enclave_output_hello).pavg(z) << std::endl;
-
-      // write processed output to disk
-      std::fstream outputStream("/tee/output/" + std::to_string(outputCounter) + ".bin", std::ios::out | std::ios::trunc | std::ios::binary);
-      if (!rawInput.MutableExtension(hello_world::data_out)->SerializeToOstream(&outputStream))
+      // reading binary from file
+      std::fstream input("/wg/output/" + std::to_string(inputCounter) + ".bin", std::ios::in | std::ios::binary);
+      if (!input)
       {
-        std::cerr << "Failed to write processed data to disk." << std::endl;
+        std::cout << "File not found." << std::endl;
+      }
+      else if (!rawInput.MutableExtension(hello_world::parsed_input)->ParseFromIstream(&input))
+      {
+        std::cerr << "Failed to parse." << std::endl;
         return -1;
       }
-      outputCounter++;
+      // send message
+      status = client->EnterAndRun(rawInput, &output);
+      if (!status.ok())
+      {
+        LOG(QFATAL) << "EnterAndRun failed: " << status;
+      }
+
+      // forward preprocessed output
+      for (int z = 0; z < output.GetExtension(hello_world::enclave_output_hello).mid_size(); z++)
+      {
+        // set temp protobuf for serialization
+        rawInput.MutableExtension(hello_world::data_out)->set_signature("placeholder");
+        rawInput.MutableExtension(hello_world::data_out)->set_mid(output.GetExtension(hello_world::enclave_output_hello).mid(z));
+        rawInput.MutableExtension(hello_world::data_out)->set_pavg(output.GetExtension(hello_world::enclave_output_hello).pavg(z));
+        rawInput.MutableExtension(hello_world::data_out)->set_iend(output.GetExtension(hello_world::enclave_output_hello).iend(z));
+
+        std::cout << "Power is: " << output.GetExtension(hello_world::enclave_output_hello).pavg(z) << std::endl;
+
+        // write processed output to disk
+        std::fstream outputStream("/tee/output/" + std::to_string(outputCounter) + ".bin", std::ios::out | std::ios::trunc | std::ios::binary);
+        if (!rawInput.MutableExtension(hello_world::data_out)->SerializeToOstream(&outputStream))
+        {
+          std::cerr << "Failed to write processed data to disk." << std::endl;
+          return -1;
+        }
+        outputCounter++;
+      }
+      inputCounter++;
     }
   }
 
