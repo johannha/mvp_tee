@@ -25,8 +25,16 @@
 #include "asylo/util/logging.h"
 #include "asylo/util/status.h"
 #include "hello_world/hello.pb.h"
+#include "sgx_tcrypto.h"
+#include "sgx_error.h"
 
 std::string publicKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820";
+
+//const sgx_rsa3072_public_key_t *public_key = &publicKey;
+// sgx_status_t eccStatus = SGX_SUCCESS;
+// sgx_ecc_state_handle_t eccContext = 0;
+
+// eccStatus = sgx_ecc256_open_context(&eccContext);
 
 // batch signature verification
 bool verifySignature(std::string *hash, std::string *signature)

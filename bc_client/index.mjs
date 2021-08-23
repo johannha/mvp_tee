@@ -8,6 +8,9 @@ import * as fs from "fs";
 const client = express();
 const port = 3000;
 
+// data read
+var dataCount = 0;
+
 // set up web3
 const rpcServer = "HTTP://127.0.0.1:7545";
 const web3 = new Web3(rpcServer);
@@ -20,6 +23,15 @@ async function getBalance(accountNumber) {
   });
   console.log(bal);
   return bal;
+}
+
+function watchFs() {
+  fs.watch("../tee/output/", (event, filename) => {
+    if (event === "rename") {
+      console.log(`${filename} file changed`);
+      forwardData(String(filename));
+    }
+  });
 }
 
 // trigger smart contract methods
@@ -37,9 +49,10 @@ async function setString(value) {
     });
 }
 
-async function setData() {
+async function forwardData(data) {
   //read from file
-  let rawData = fs.readFileSync("../tee/output/0.bin");
+  let rawData = fs.readFileSync(`../tee/output/${data}`);
+
   let parsedObject = dataJS.teeData.deserializeBinary(rawData);
 
   let signature = parsedObject.getSignature();
@@ -102,8 +115,9 @@ client.get("/set/string", (req, res) => {
   setString("new one").then((value) => res.send(value));
 });
 
-client.get("/push/data", (req, res) => {
-  setData().then(() => res.send("New data added"));
+client.get("/watch/fs", (req, res) => {
+  res.send("BC is now watching FS and forwards messages to Blockchain.");
+  watchFs();
 });
 
 client.listen(port, () => {
