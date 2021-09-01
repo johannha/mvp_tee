@@ -29,6 +29,7 @@ package(
 
 # Example for using the Asylo framework.
 
+
 proto_library(
     name = "hello_proto",
     srcs = ["hello.proto"],
@@ -49,7 +50,6 @@ cc_unsigned_enclave(
         "@com_google_asylo//asylo:enclave_runtime",
         "@com_google_asylo//asylo/util:logging",
         "@com_google_asylo//asylo/util:status",
-        
     ],
 )
 

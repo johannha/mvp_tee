@@ -6,4 +6,40 @@ hash = "db1c85c669b217cc193011b541749b75c032c4fc612f670b58b95a6591992c33"
 
 verifier = VerifyingKey.from_string(bytes.fromhex(publicKey), curve=NIST256p)
 
+z = verifier.to_string()
+
+print("To string: ")
+print(z)
+
+# calculates x and y coordinates of the public key and converts it to big-endian for use in enclave
+
+
+xPart = publicKey[:64]
+xResult = []
+print("X part of the arrax")
+print(xPart)
+xResult.append([int((xPart[i:i+2])[::-1], 16)
+               for i in range(0, len(xPart), 2)])
+print("x Result = ")
+print(xResult)
+
+
+yPart = publicKey[-64:]
+yResult = []
+print("Y part of the arrax")
+print(yPart)
+yResult.append([int((yPart[j:j+2])[::-1], 16)
+               for j in range(0, len(yPart), 2)])
+print("y Result = ")
+print(yResult)
+
+
+# decoded = int.from_bytes(bytes.fromhex(publicKey),
+#                          byteorder='big', signed=False)
+
+
+# with open("pk.pem", "wb") as f:
+#     f.write(verifier.to_pem())
+
+# Tests signature
 print(verifier.verify(bytes.fromhex(signature), bytes.fromhex(hash)))

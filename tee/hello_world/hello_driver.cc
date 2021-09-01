@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     // break if 15 batches are created
-    if (inputCounter > 15)
+    if (inputCounter > 8)
     {
       break;
     }
