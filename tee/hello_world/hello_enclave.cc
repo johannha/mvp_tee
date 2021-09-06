@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <string>
 
+#include "sgx_tcrypto.h"
+#include "sgx_error.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "asylo/trusted_application.h"
@@ -26,10 +28,10 @@
 #include "asylo/util/status.h"
 #include "hello_world/hello.pb.h"
 #include "sgx_defs.h"
-#include "sgx_tcrypto.h"
-#include "sgx_error.h"
 
 std::string publicKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820";
+uint8_t xValues[32] = {114, 32, 179, 254, 145, 16, 56, 76, 227, 113, 137, 58, 52, 202, 7, 93, 163, 35, 159, 181, 74, 40, 99, 240, 177, 103, 136, 155, 196, 255, 154, 123};
+uint8_t yValues[32] = {83, 177, 164, 118, 139, 210, 136, 96, 9, 53, 209, 1, 54, 56, 252, 71, 210, 3, 203, 160, 172, 115, 0, 92, 51, 146, 156, 169, 37, 114, 140, 2};
 
 // batch signature verification
 bool verifySignature(std::string *hash, std::string *signature)
@@ -50,16 +52,6 @@ public:
       return absl::InvalidArgumentError(
           "Expected a HelloInput extension on input.");
     }
-    LOG(INFO) << publicKey.length();
-    LOG(INFO) << "First String: " << publicKey.substr(0, 64);
-    LOG(INFO) << "Second String: " << publicKey.substr(64, 64);
-
-    sgx_ec256_public_t publicSet;
-    xSubstring = substr(0, 64);
-    ySubstring = substr(64, 64);
-
-    uint8_t xArray[32];
-    uint8_t yArray[32];
 
     //publicSet.gy = stoi(publicKey.substr(64, 64));
 
@@ -68,9 +60,18 @@ public:
     std::string hash = input.GetExtension(hello_world::parsed_input).hash();
     std::string signature = input.GetExtension(hello_world::parsed_input).signature();
 
-    // TODO: implement signature verification
+    LOG(INFO) << "Signature: " << signature.length() << "\n";
 
-    // Prepare data for hashing
+    // TODO: implement signature verification
+    // declare public key in coordinte form
+    sgx_ec256_public_t publicSet;
+    memcpy(publicSet.gx, xValues, sizeof(xValues));
+    memcpy(publicSet.gy, yValues, sizeof(yValues));
+
+    // convert signature from data batch
+    sgx_ec256_signature_t signatureCoordinates;
+
+    // prepare data for hashing
     std::string hashPrep = "";
 
     for (int y = 0; y < input.GetExtension(hello_world::parsed_input).data_size(); y++)
@@ -78,18 +79,24 @@ public:
       hashPrep = hashPrep + input.GetExtension(hello_world::parsed_input).data(y).mid() + input.GetExtension(hello_world::parsed_input).data(y).idur() + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).pavg()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).ein()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).eout());
     }
     LOG(INFO) << "Hash prep is " << hashPrep;
+    uint32_t hashSize = sizeof(hashPrep);
 
-    // sgx_status_t status = SGX_SUCCESS;
-    // sgx_ecc_state_handle_t handle = 0;
-    // sgx_ec256_signature_t ec_signature;
-    //status = SGXAPI sgx_ecc256_open_context(&handle);
-    //SGXAPI sgx_ecdsa_verify();
+    // verifiy signature
 
-    // if (SGX_SUCCESS != status){
-    //      return status;
-    // }
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+    sgx_ecc_state_handle_t p_ecc_handle = NULL;
 
-    // eccStatus = sgx_ecc256_open_context(&eccContext);
+    if ((ret = sgx_ecc256_open_context(&p_ecc_handle)) != SGX_SUCCESS)
+    {
+      LOG(INFO) << ("\nTrustedApp: sgx_ecc256_open_context() failed !\n");
+    }
+
+    // ret = sgx_ecdsa_verify(&hashPrep, hashSize, &publicSet,
+    //                        const sgx_ec256_signature_t *p_signature,
+    //                        uint8_t *p_result,
+    //                        sgx_ecc_state_handle_t ecc_handle);
+
+    sgx_ecc256_close_context(p_ecc_handle);
 
     if (verifySignature(&hash, &signature) == 1)
     {
