@@ -50,6 +50,8 @@ cc_unsigned_enclave(
         "@com_google_asylo//asylo:enclave_runtime",
         "@com_google_asylo//asylo/util:logging",
         "@com_google_asylo//asylo/util:status",
+        "@boringssl//:crypto"
+        
     ],
 )
 

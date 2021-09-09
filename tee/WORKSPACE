@@ -20,6 +20,9 @@ asylo_deps()
 
 asylo_testonly_deps()
 
+# crypto
+
+
 # sgx_deps is only needed if @linux_sgx is used.
 load("@com_google_asylo//asylo/bazel:sgx_deps.bzl", "sgx_deps")
 
