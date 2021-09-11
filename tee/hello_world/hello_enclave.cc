@@ -85,25 +85,32 @@ public:
     // TODO: implement signature verification
 
     /* ------------------------ Prepare Data for hashing ------------------------ */
-    std::string hashPrep = "";
+    std::string hashPrep;
+
+    // Rundungsfehler be eout!!!
 
     for (int y = 0; y < input.GetExtension(hello_world::parsed_input).data_size(); y++)
     {
-      hashPrep = hashPrep + input.GetExtension(hello_world::parsed_input).data(y).mid() + input.GetExtension(hello_world::parsed_input).data(y).idur() + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).pavg()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).ein()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).eout());
+      //hashPrep = hashPrep + input.GetExtension(hello_world::parsed_input).data(y).mid() + input.GetExtension(hello_world::parsed_input).data(y).idur() + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).pavg()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).ein()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).eout());
+      hashPrep.append(std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()));
     }
     LOG(INFO) << "Hash prep is " << hashPrep;
-    size_t hashSize = sizeof(hashPrep);
+    char const *hashByte = hashPrep.c_str();
+    size_t hashSize = sizeof(hashByte);
 
     // hash batch content
     SHA256_CTX contextDigit;
     uint8_t finalHash[32];
     int resultPrep = SHA256_Init(&contextDigit);
-    SHA256_Update(&contextDigit, &hashPrep, hashSize);
+    SHA256_Update(&contextDigit, hashByte, strlen(hashByte));
     int hashVal = SHA256_Final(finalHash, &contextDigit);
 
+    LOG(INFO) << "Hash State: " << hashVal;
+
     // compare signature
-    int n = memcmp(intHash, &finalHash[0], 1);
+    int n = memcmp(intHash, &finalHash[0], sizeof(finalHash));
     LOG(INFO) << "Hash comparison: " << n;
+    LOG(INFO) << "Final hash of enclave: " << finalHash;
 
     // verifiy signature
     // ByteContainerView pemContainer(&pemString);

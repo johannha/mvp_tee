@@ -44,6 +44,14 @@ signer = SigningKey.from_string(bytes.fromhex(signKey), curve=NIST256p)
 
 def serialize(batch):
 
+    # swap endian for TEE
+    # print("Original hash: " + batch.hash)
+    # endianSwapHash = ""
+    # for j in range(0, len(batch.hash), 2):
+    #     endianSwapHash += (batch.hash[j:j+2])[::-1]
+    # print("Swapped hash: " + endianSwapHash)
+    # batch.hash = endianSwapHash
+
     print(batch)
 
     result = batch.SerializeToString()
@@ -100,11 +108,13 @@ if __name__ == "__main__":
                 tempBatch.data.append(tempData)
 
                 # append values to hashPrep
-                for value in json_array[dataIndex].values():
-                    hashPrep = hashPrep + str(value)
+                # for value in json_array[dataIndex].values():
+                #     hashPrep = hashPrep + str(value)
+                hashPrep = hashPrep + str(json_array[dataIndex].get('IEnd'))
                 dataIndex += 1
 
             # hash Values
+            print("Hash prep: " + hashPrep)
             tempBatch.hash = hashBatch(hashPrep)
 
             # sign hash
