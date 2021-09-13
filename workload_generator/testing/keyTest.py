@@ -38,8 +38,8 @@ print(yResult)
 #                          byteorder='big', signed=False)
 
 
-with open("pk.pem", "wb") as f:
-    f.write(verifier.to_pem())
+# with open("pk.pem", "wb") as f:
+#     f.write(verifier.to_pem())
 
 # Tests signature
 print(verifier.verify(bytes.fromhex(signature), bytes.fromhex(hash)))
