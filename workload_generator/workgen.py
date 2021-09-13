@@ -6,6 +6,7 @@ import hashlib
 from six import indexbytes
 import rawData_pb2
 from ecdsa import SigningKey, NIST256p
+from ecdsa.util import sigencode_der, sigdecode_der
 
 # Example call: "python3 workgen.py -s 5 -a 3 -t 60" --> generates 3 batches, containing 5 objects with a throughput of 60 batches/min
 
@@ -39,10 +40,21 @@ def checkArg():
 signKey = "665345f0a9f342eaac09c209161d25de60233b77834b4db3ece0406758d00a54"
 verifyKey = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820"
 
-signer = SigningKey.from_string(bytes.fromhex(signKey), curve=NIST256p)
+signer = SigningKey.from_string(bytes.fromhex(
+    signKey), curve=NIST256p, hashfunc=hashlib.sha256)
+
+print("Der signing key: " + signer.to_der().hex())
 
 
 def serialize(batch):
+
+    # swap endian for TEE
+    # print("Original hash: " + batch.hash)
+    # endianSwapHash = ""
+    # for j in range(0, len(batch.hash), 2):
+    #     endianSwapHash += (batch.hash[j:j+2])[::-1]
+    # print("Swapped hash: " + endianSwapHash)
+    # batch.hash = endianSwapHash
 
     print(batch)
 
@@ -59,7 +71,8 @@ def hashBatch(valueChain):
 
 
 def signHash(hash):
-    return signer.sign(bytes.fromhex(hash)).hex()
+    # return signer.sign(bytes.fromhex(hash), sigencode=sigencode_der).hex()
+    return signer.sign_deterministic((str.encode(hash)), sigencode=sigencode_der).hex()
 
 
 # ----------------------------------- Main ----------------------------------- #
@@ -100,15 +113,17 @@ if __name__ == "__main__":
                 tempBatch.data.append(tempData)
 
                 # append values to hashPrep
-                for value in json_array[dataIndex].values():
-                    hashPrep = hashPrep + str(value)
+                # for value in json_array[dataIndex].values():
+                #     hashPrep = hashPrep + str(value)
+                hashPrep = hashPrep + str(json_array[dataIndex].get('IEnd'))
                 dataIndex += 1
 
             # hash Values
+            print("Hash prep: " + hashPrep)
             tempBatch.hash = hashBatch(hashPrep)
 
             # sign hash
-            tempBatch.signature = signHash(tempBatch.hash)
+            tempBatch.signature = signHash(hashPrep)
 
             # creates full batch and writes it to direcory
             serialize(tempBatch)

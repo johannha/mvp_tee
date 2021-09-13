@@ -18,7 +18,7 @@ docker run -it --rm \
     -v "/Users/johannhartmann 1/Documents/Code/mvp_tee/tee/output":/tee/output \
     -w /opt/my-project \
     gcr.io/asylo-framework/asylo \
-    bazel run //hello_world:hello_world_sgx_sim -- --words="Bürostuhl,Fensterbrett"
+    bazel run //hello_world:hello_world_sgx_sim
 ```
 
 This is loading the enclave in simulation mode.
