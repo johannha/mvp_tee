@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       for (int z = 0; z < output.GetExtension(hello_world::enclave_output_hello).mid_size(); z++)
       {
         // set temp protobuf for serialization
-        rawInput.MutableExtension(hello_world::data_out)->set_signature("placeholder");
+        rawInput.MutableExtension(hello_world::data_out)->set_signature(output.GetExtension(hello_world::enclave_output_hello).signature(z));
         rawInput.MutableExtension(hello_world::data_out)->set_mid(output.GetExtension(hello_world::enclave_output_hello).mid(z));
         rawInput.MutableExtension(hello_world::data_out)->set_pavg(output.GetExtension(hello_world::enclave_output_hello).pavg(z));
         rawInput.MutableExtension(hello_world::data_out)->set_iend(output.GetExtension(hello_world::enclave_output_hello).iend(z));

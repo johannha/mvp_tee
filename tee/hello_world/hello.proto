@@ -45,7 +45,7 @@ message toClient {
 }
 
 message ProcessedOutput {
-  optional string signature = 1;
+  repeated string signature = 1;
   repeated string MId = 2;
   repeated double PAvg = 3;
   repeated int64 IEnd = 4;
