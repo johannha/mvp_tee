@@ -38,7 +38,7 @@
 
 /* ----------------------------- Helper methods ----------------------------- */
 uint8_t *hex_str_to_uint8(const char *string);
-std::string hexStringSwap(std::string little);
+//std::string hexStringSwap(std::string little);
 int verifySignature(uint8_t *x, uint8_t *y, std::string signature, uint8_t *signaturePointer, uint8_t *finalHash);
 std::string enryptId(std::string input);
 std::string signBatch(std::string toSign, uint8_t *privateKey);
@@ -82,14 +82,14 @@ public:
       hashPrep.append(std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()));
     }
     //LOG(INFO) << "Hash prep is " << hashPrep;
-    char const *hashByte = hashPrep.c_str();
-    size_t hashSize = sizeof(hashByte);
+    char const *hashByteMain = hashPrep.c_str();
+    size_t hashSize = sizeof(hashByteMain);
 
     // hash batch content
     SHA256_CTX contextDigit;
     uint8_t finalHash[32];
     int resultPrep = SHA256_Init(&contextDigit);
-    SHA256_Update(&contextDigit, hashByte, strlen(hashByte));
+    SHA256_Update(&contextDigit, hashByteMain, strlen(hashByteMain));
     int hashVal = SHA256_Final(finalHash, &contextDigit);
 
     // compare signature (for testing only)
@@ -109,12 +109,13 @@ public:
         for (int i = 0; i < dataSize; i++)
         {
           double power = input.GetExtension(hello_world::parsed_input).data(i).pavg();
+
           if (power > 100)
           {
             std::string hashedId = enryptId(input.GetExtension(hello_world::parsed_input).data(i).mid());
-            // remote attestation faker: depens on power only
-            std::string attestResult = signBatch(std::to_string(power), privateDerInt);
-            LOG(INFO) << "Resulting signature is: " << attestResult;
+            // remote attestation faker: depens on iend only
+            //LOG(INFO) << "IEND is: " << std::to_string(input.GetExtension(hello_world::parsed_input).data(i).iend());
+            std::string attestResult = signBatch(std::to_string(input.GetExtension(hello_world::parsed_input).data(i).iend()), privateDerInt);
 
             output->MutableExtension(hello_world::enclave_output_hello)->add_signature(attestResult);
             output->MutableExtension(hello_world::enclave_output_hello)->add_mid(hashedId);
@@ -178,20 +179,20 @@ uint8_t *hex_str_to_uint8(const char *string)
   return data;
 }
 /* ------------------------ Swap endian of hex string ----------------------- */
-std::string hexStringSwap(std::string little)
-{
-  std::string input = little;
+// std::string hexStringSwap(std::string little)
+// {
+//   std::string input = little;
 
-  LOG(INFO) << "Input Signature: " << input;
+//   LOG(INFO) << "Input Signature: " << input;
 
-  std::reverse(input.begin(), input.end());
-  for (auto it = input.begin(); it != input.end(); it += 2)
-  {
-    std::swap(it[0], it[1]);
-  }
+//   std::reverse(input.begin(), input.end());
+//   for (auto it = input.begin(); it != input.end(); it += 2)
+//   {
+//     std::swap(it[0], it[1]);
+//   }
 
-  return input;
-}
+//   return input;
+// }
 
 /* ----------------- Check signature of raw IoT data batches ---------------- */
 int verifySignature(uint8_t *x, uint8_t *y, std::string signature, uint8_t *signaturePointer, uint8_t *finalHash)
@@ -231,11 +232,11 @@ std::string enryptId(std::string input)
 
   std::string output;
 
-  char const *hashByte = input.c_str();
+  char const *hashByteCrypt = input.c_str();
   SHA256_CTX contextId;
   uint8_t finalHashId[32];
   int resultPrep = SHA256_Init(&contextId);
-  SHA256_Update(&contextId, hashByte, strlen(hashByte));
+  SHA256_Update(&contextId, hashByteCrypt, strlen(hashByteCrypt));
   int hashVal = SHA256_Final(finalHashId, &contextId);
 
   for (int i : finalHashId)
@@ -245,17 +246,18 @@ std::string enryptId(std::string input)
   return output;
 }
 
-/* ----------------------- Sign processed data batches ---------------------- */
+/* ----------------------- Sign processed data batches (Depends on power iend only!) ---------------------- */
 std::string signBatch(std::string toSign, uint8_t *privateKey)
 {
 
+  LOG(INFO) << "Input String: " << toSign;
   // hash concatenated input string
   std::string output;
-  char const *hashByte = toSign.c_str();
+  char const *hashByteBatch = toSign.c_str();
   SHA256_CTX context;
   uint8_t finalHashId[32];
   int resultPrep = SHA256_Init(&context);
-  SHA256_Update(&context, hashByte, strlen(hashByte));
+  SHA256_Update(&context, hashByteBatch, strlen(hashByteBatch));
   int hashVal = SHA256_Final(finalHashId, &context);
 
   EC_KEY *privateEC = EC_KEY_new();
@@ -268,34 +270,37 @@ std::string signBatch(std::string toSign, uint8_t *privateKey)
   int test = EC_KEY_set_private_key(privateEC, privateBig);
 
   // Allocate space for signature
-  uint8_t *signBytes = (uint8_t *)malloc(64);
-  unsigned int *signLength;
+  // uint8_t *signBytes = new uint8_t[100];
+  // unsigned int *signLength;
 
-  int resultSign = ECDSA_sign(0, &finalHashId[0], 32, signBytes, signLength, privateEC);
+  // int resultSign = ECDSA_sign(0, &finalHashId[0], 32, signBytes, signLength, privateEC);
 
-  LOG(INFO) << "Length of signature: " << *signLength;
+  // LOG(INFO) << "Result Sign" << resultSign;
+
+  //  LOG(INFO) << "Length of signature: " << *signLength;
+
+  // std::string s = "";
+  // std::ostringstream oss;
+  // oss << std::setfill('0');
+
+  // for (int i = 0; i < *signLength; i++)
+  // {
+  //   oss << std::setw(2) << std::hex << (int)(*signBytes + i);
+  // }
+
+  ECDSA_SIG *resultSignature = ECDSA_do_sign(&finalHashId[0], 32, privateEC);
+
+  char *r = BN_bn2hex(resultSignature->r);
+  char *s = BN_bn2hex(resultSignature->s);
+
+  output.append(r);
+  output.append(s);
+  output.append("01");
+
+  LOG(INFO) << "Resulting signature: " << output;
+  // output = oss.str();
 
   EC_KEY_free(privateEC);
-
-  std::string s = "";
-  std::ostringstream oss;
-  oss << std::setfill('0');
-
-  for (int i = 0; i < *signLength; i++)
-  {
-    //ss << std::setw(2) << std::setfill('0') << (int)signBytes[i];
-    //LOG(INFO) << (int)*(signBytes + i);
-    oss << std::setw(2) << std::hex << (int)(*signBytes + i);
-  }
-  output = oss.str();
-
-  //ECDSA_SIG *signature = ECDSA_do_sign(&finalHashId[0], 32, privateEC);
-
-  // if (signature == NULL)
-  // {
-  //   LOG(INFO) << "Signature generation failed";
-  // }
-  free(signBytes);
-
+  // delete[] signBytes;
   return output;
 }

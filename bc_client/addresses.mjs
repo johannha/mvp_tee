@@ -6,7 +6,7 @@ const addresses = {
 };
 
 const scAddresses = {
-  1: "0x60Fb88180F82DCeE4e4AD9ed1fc249533f4C0E71",
+  1: "0x38F8FceB55174Fd3629429385B9C2F9EA5dF819E",
 };
 
 const abi = {
@@ -29,9 +29,9 @@ const abi = {
       name: "dataMap",
       outputs: [
         {
-          internalType: "string",
+          internalType: "bytes",
           name: "_signature",
-          type: "string",
+          type: "bytes",
         },
         {
           internalType: "string",
@@ -44,9 +44,14 @@ const abi = {
           type: "uint16",
         },
         {
-          internalType: "uint64",
+          internalType: "string",
           name: "IEnd",
-          type: "uint64",
+          type: "string",
+        },
+        {
+          internalType: "bool",
+          name: "verified",
+          type: "bool",
         },
       ],
       payable: false,
@@ -87,9 +92,9 @@ const abi = {
       constant: false,
       inputs: [
         {
-          internalType: "string",
+          internalType: "bytes",
           name: "_signature",
-          type: "string",
+          type: "bytes",
         },
         {
           internalType: "string",
@@ -102,9 +107,9 @@ const abi = {
           type: "uint16",
         },
         {
-          internalType: "uint64",
+          internalType: "string",
           name: "_IEnd",
-          type: "uint64",
+          type: "string",
         },
       ],
       name: "addData",

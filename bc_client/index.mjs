@@ -26,6 +26,7 @@ async function getBalance(accountNumber) {
 }
 
 function watchFs() {
+  console.log(scAddresses[1]);
   fs.watch("../tee/output/", (event, filename) => {
     if (event === "rename") {
       console.log(`${filename} file changed`);
@@ -51,17 +52,23 @@ async function setString(value) {
 
 async function forwardData(data) {
   //read from file
+
   let rawData = fs.readFileSync(`../tee/output/${data}`);
 
   let parsedObject = dataJS.teeData.deserializeBinary(rawData);
 
   let signature = parsedObject.getSignature();
-  let mid = parsedObject.getMid();
+  let mid = String(parsedObject.getMid());
   let pavg = parseInt(parsedObject.getPavg());
   let iend = parseInt(parsedObject.getIend());
 
+  // hex string to byte array
+  let iend_string = String(iend);
+  //let signature_byte = web3.utils.hexToBytes(signature);
+  let signature_byte = hexToBytes(signature);
+  //console.log(signature_byte);
+
   console.log("The received Power: " + parsedObject.getPavg());
-  console.log(typeof pavg);
 
   // add to smart contract
   let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
@@ -69,10 +76,11 @@ async function forwardData(data) {
     gas: 6721975,
   });
   contract.methods
-    .addData(signature, mid, pavg, iend)
+    .addData(signature_byte, mid, pavg, iend_string)
     .send({ from: addresses[1] })
     .on("receipt", (hash) => {
       console.log(hash);
+      return 0;
     });
 }
 
@@ -96,6 +104,13 @@ async function readDataMap() {
   return temp;
 }
 
+// helper
+function hexToBytes(hex) {
+  for (var bytes = [], c = 0; c < hex.length; c += 2)
+    bytes.push(parseInt(hex.substr(c, 2), 16));
+  return bytes;
+}
+
 // client requests
 
 client.get("/bal/1", async (req, res) => {
@@ -112,7 +127,7 @@ client.get("/get/dataMap", (req, res) => {
 });
 
 client.get("/set/string", (req, res) => {
-  setString("new one").then((value) => res.send(value));
+  setString("Message from blockchain client").then((value) => res.send(value));
 });
 
 client.get("/watch/fs", (req, res) => {
@@ -122,4 +137,6 @@ client.get("/watch/fs", (req, res) => {
 
 client.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
+  watchFs();
+  console.log("BC is now watching FS and forwards messages to Blockchain.");
 });
