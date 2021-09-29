@@ -40,11 +40,16 @@ contract Hellodata {
         uint16 _PAvg,
         string memory _IEnd
     ) public {
+        bytes memory _movedSignature;
+        // bring signature in form
+        for (uint256 i = 4; i < _signature.length; i++) {
+            _movedSignature[i - 4] = _signature[i];
+        }
         bytes32 _hash = hashString(_IEnd);
         bool _verified = false;
-        //bool _verified = verifySignature(_signature, _hash);
+        _verified = verifySignature(_movedSignature, _hash);
         dataMap[_dataCount] = DataBatch(
-            _signature,
+            _movedSignature,
             _MId,
             _PAvg,
             _IEnd,

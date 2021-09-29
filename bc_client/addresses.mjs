@@ -6,7 +6,7 @@ const addresses = {
 };
 
 const scAddresses = {
-  1: "0x38F8FceB55174Fd3629429385B9C2F9EA5dF819E",
+  1: "0x04fF4ebb67779250E7354FA0e0eaa37e385762A0",
 };
 
 const abi = {

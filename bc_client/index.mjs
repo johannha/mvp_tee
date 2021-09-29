@@ -57,16 +57,17 @@ async function forwardData(data) {
 
   let parsedObject = dataJS.teeData.deserializeBinary(rawData);
 
-  let signature = parsedObject.getSignature();
+  let signature = "0x" + parsedObject.getSignature();
   let mid = String(parsedObject.getMid());
   let pavg = parseInt(parsedObject.getPavg());
   let iend = parseInt(parsedObject.getIend());
 
+  console.log("String: " + signature);
   // hex string to byte array
   let iend_string = String(iend);
   //let signature_byte = web3.utils.hexToBytes(signature);
   let signature_byte = hexToBytes(signature);
-  //console.log(signature_byte);
+  console.log(signature_byte);
 
   console.log("The received Power: " + parsedObject.getPavg());
 
