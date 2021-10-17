@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd ../workload_generator/
+python3 deleteOutput.py

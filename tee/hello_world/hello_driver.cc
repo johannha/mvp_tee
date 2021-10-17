@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -40,13 +41,11 @@ int main(int argc, char *argv[])
   // Part 0: Setup
   absl::ParseCommandLine(argc, argv);
 
-  // if (absl::GetFlag(FLAGS_words).empty())
-  // {
-  //   LOG(QFATAL) << "Must supply a non-empty list of words with --words";
-  // }
-
-  // std::vector<std::string> words =
-  //     absl::StrSplit(absl::GetFlag(FLAGS_words), ',');
+  // Set clock
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::milliseconds;
 
   // Part 1: Initialization
   asylo::EnclaveManager::Configure(asylo::EnclaveManagerOptions());
@@ -89,11 +88,12 @@ int main(int argc, char *argv[])
   int inputCounter = 0;
   int outputCounter = 0;
 
+  auto t1 = high_resolution_clock::now();
   // iteration over input batches
   while (1)
   {
-    // break if 15 batches are created
-    if (inputCounter > 8)
+    // break if x batches are created
+    if (inputCounter >= 13)
     {
       break;
     }
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       for (int z = 0; z < output.GetExtension(hello_world::enclave_output_hello).mid_size(); z++)
       {
         // set temp protobuf for serialization
-        rawInput.MutableExtension(hello_world::data_out)->set_signature("placeholder");
+        rawInput.MutableExtension(hello_world::data_out)->set_signature(output.GetExtension(hello_world::enclave_output_hello).signature(z));
         rawInput.MutableExtension(hello_world::data_out)->set_mid(output.GetExtension(hello_world::enclave_output_hello).mid(z));
         rawInput.MutableExtension(hello_world::data_out)->set_pavg(output.GetExtension(hello_world::enclave_output_hello).pavg(z));
         rawInput.MutableExtension(hello_world::data_out)->set_iend(output.GetExtension(hello_world::enclave_output_hello).iend(z));
@@ -143,6 +143,11 @@ int main(int argc, char *argv[])
       inputCounter++;
     }
   }
+  auto t2 = high_resolution_clock::now();
+
+  duration<double, std::milli> ms_double = t2 - t1;
+
+  LOG(INFO) << "Execution Time: " << ms_double.count();
 
   // Part 3: Finalization
 

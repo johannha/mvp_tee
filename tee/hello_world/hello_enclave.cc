@@ -18,6 +18,8 @@
 
 #include <cstdint>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 #include <openssl/bytestring.h>
 #include <openssl/obj_mac.h>
@@ -32,22 +34,14 @@
 #include "asylo/util/status.h"
 #include "hello_world/hello.pb.h"
 #include "sgx_defs.h"
+#include "sgx_tcrypto.h"
 
-std::string pemString = "-----BEGIN PUBLIC KEY-----MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJwI77xkBg8Q+F5ijQ6xw1Toy+VukgjYPG3aIuUz/qbc1G0pnuC2IBpBTHRBjg890LTC8Cso3AMUzKcmaUifIIA==-----END PUBLIC KEY-----";
-
+/* ----------------------------- Helper methods ----------------------------- */
 uint8_t *hex_str_to_uint8(const char *string);
-std::string hexStringSwap(std::string little);
-
-// uint8_t *xBuffer = std::malloc(32 * sizeof(uint8_t));
-// uint8_t *yBuffer = std::malloc(32 * sizeof(uint8_t));
-
-// std::memcpy(xBuffer, xValues, 32);
-
-// batch signature verification
-bool verifySignature(std::string *hash, std::string *signature)
-{
-  return true;
-}
+//std::string hexStringSwap(std::string little);
+int verifySignature(uint8_t *x, uint8_t *y, std::string signature, uint8_t *signaturePointer, uint8_t *finalHash);
+std::string enryptId(std::string input);
+std::string signBatch(std::string toSign, uint8_t *privateKey);
 
 class HelloApplication : public asylo::TrustedApplication
 {
@@ -63,112 +57,68 @@ public:
           "Expected a HelloInput extension on input.");
     }
 
-    //publicSet.gy = stoi(publicKey.substr(64, 64));
-
     /* -------------- Parsing and deserializing hash and signature -------------- */
 
-    std::string signingKeyDer = "30770201010420665345f0a9f342eaac09c209161d25de60233b77834b4db3ece0406758d00a54a00a06082a8648ce3d030107a1440342000427023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820";
+    std::string privateDer = "665345f0a9f342eaac09c209161d25de60233b77834b4db3ece0406758d00a54";
     std::string xString = "27023bef190183c43e1798a343ac70d53a32f95ba482360f1b7688b94cffa9b7";
     std::string yString = "351b4a67b82d880690531d106383cf742d30bc0aca3700c53329c99a5227c820";
-    const uint8_t xValues[] = {114, 32, 179, 254, 145, 16, 56, 76, 227, 113, 137, 58, 52, 202, 7, 93, 163, 35, 159, 181, 74, 40, 99, 240, 177, 103, 136, 155, 196, 255, 154, 123};
-    const uint8_t yValues[] = {83, 177, 164, 118, 139, 210, 136, 96, 9, 53, 209, 1, 54, 56, 252, 71, 210, 3, 203, 160, 172, 115, 0, 92, 51, 146, 156, 169, 37, 114, 140, 2};
-
-    const uint8_t *xPointer = xValues;
-    const uint8_t *yPointer = yValues;
 
     std::string hash = input.GetExtension(hello_world::parsed_input).hash();
     std::string signature = input.GetExtension(hello_world::parsed_input).signature();
 
-    LOG(INFO) << "Signature in DER: " << signature;
-    //signature = hexStringSwap(signature);
-    LOG(INFO) << "Length of signature: " << signature.length();
-    // LOG(INFO) << "Output Signature: " << signature;
-
     char *hash_arr = &hash[0];
-    char *signingPointer = &signingKeyDer[0];
 
     uint8_t *intSignature = hex_str_to_uint8(&signature[0]);
     uint8_t *intHash = hex_str_to_uint8(hash_arr);
-    uint8_t *intSigner = hex_str_to_uint8(signingPointer);
     uint8_t *xStringtoInt = hex_str_to_uint8(&xString[0]);
     uint8_t *yStringtoInt = hex_str_to_uint8(&yString[0]);
-
-    LOG(INFO) << "Signature: " << signature << "\n";
-
-    // TODO: implement signature verification
+    uint8_t *privateDerInt = hex_str_to_uint8(&privateDer[0]);
 
     /* ------------------------ Prepare Data for hashing ------------------------ */
     std::string hashPrep;
 
     for (int y = 0; y < input.GetExtension(hello_world::parsed_input).data_size(); y++)
     {
-      //hashPrep = hashPrep + input.GetExtension(hello_world::parsed_input).data(y).mid() + input.GetExtension(hello_world::parsed_input).data(y).idur() + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).pavg()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).ein()) + std::to_string(input.GetExtension(hello_world::parsed_input).data(y).eout());
       hashPrep.append(std::to_string(input.GetExtension(hello_world::parsed_input).data(y).iend()));
     }
-    LOG(INFO) << "Hash prep is " << hashPrep;
-    char const *hashByte = hashPrep.c_str();
-    size_t hashSize = sizeof(hashByte);
+    //LOG(INFO) << "Hash prep is " << hashPrep;
+    char const *hashByteMain = hashPrep.c_str();
+    size_t hashSize = sizeof(hashByteMain);
 
     // hash batch content
     SHA256_CTX contextDigit;
     uint8_t finalHash[32];
     int resultPrep = SHA256_Init(&contextDigit);
-    SHA256_Update(&contextDigit, hashByte, strlen(hashByte));
+    SHA256_Update(&contextDigit, hashByteMain, strlen(hashByteMain));
     int hashVal = SHA256_Final(finalHash, &contextDigit);
 
-    // compare signature
-    int n = memcmp(intHash, &finalHash[0], 32);
-    LOG(INFO) << "Hash comparison: " << n;
-    LOG(INFO) << "Final hash of enclave: " << finalHash;
+    // compare signature (for testing only)
+    // int n = memcmp(intHash, &finalHash[0], 32);
+    // LOG(INFO) << "Hash comparison: " << n;
+    // LOG(INFO) << "Final hash of enclave: " << finalHash;
 
     // verifiy signature
-
-    EC_KEY *publicKey = EC_KEY_new();
-    EC_GROUP *ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
-    int set_group_status = EC_KEY_set_group(publicKey, ecgroup);
-
-    LOG(INFO) << "Group Status: " << set_group_status;
-
-    BIGNUM *xBig = BN_new();
-    BIGNUM *yBig = BN_new();
-
-    BIGNUM *xBigResult = BN_bin2bn(xStringtoInt, 32, xBig);
-    BIGNUM *yBigResult = BN_bin2bn(yStringtoInt, 32, yBig);
-
-    int createKey = EC_KEY_set_public_key_affine_coordinates(publicKey, xBig, yBig);
-
-    LOG(INFO) << "Key generation: " << createKey;
-
-    // ECDSA_verify(int type, const uint8_t *digest,
-    //                            size_t digest_len, const uint8_t *sig,
-    //                            size_t sig_len, const EC_KEY *key);
-
-    ECDSA_SIG *signatureDer = ECDSA_SIG_from_bytes(intSignature, (signature.length() / 2));
-    if (signatureDer == NULL)
-    {
-      LOG(INFO) << "Error while signature des";
-    }
-    //int validation = ECDSA_verify(0, &finalHash[0], 32, intSignature, 64, publicKey);
-    int validation = ECDSA_do_verify(&finalHash[0], 32, signatureDer, publicKey);
-
-    LOG(INFO) << "ECDSA result: " << validation;
-
-    if (verifySignature(&hash, &signature) == 1)
+    if (verifySignature(xStringtoInt, yStringtoInt, signature, intSignature, &finalHash[0]) == 1)
     {
       int dataSize = input.GetExtension(hello_world::parsed_input).data_size();
       if (output)
       {
         visitor_count_++;
+
         // threshold detection
         for (int i = 0; i < dataSize; i++)
         {
           double power = input.GetExtension(hello_world::parsed_input).data(i).pavg();
-          if (power > 100)
+
+          if (power > 130)
           {
-            // TODO: remote attestation
-            //LOG(INFO) << "Power is " << std::to_string(power);
-            // sets output message
-            output->MutableExtension(hello_world::enclave_output_hello)->add_mid(input.GetExtension(hello_world::parsed_input).data(i).mid());
+            std::string hashedId = enryptId(input.GetExtension(hello_world::parsed_input).data(i).mid());
+            // remote attestation faker: depens on iend only
+            //LOG(INFO) << "IEND is: " << std::to_string(input.GetExtension(hello_world::parsed_input).data(i).iend());
+            std::string attestResult = signBatch(std::to_string(input.GetExtension(hello_world::parsed_input).data(i).iend()), privateDerInt);
+
+            output->MutableExtension(hello_world::enclave_output_hello)->add_signature(attestResult);
+            output->MutableExtension(hello_world::enclave_output_hello)->add_mid(hashedId);
             output->MutableExtension(hello_world::enclave_output_hello)->add_pavg(power);
             output->MutableExtension(hello_world::enclave_output_hello)->add_iend(input.GetExtension(hello_world::parsed_input).data(i).iend());
           }
@@ -190,6 +140,7 @@ namespace asylo
 
 } // namespace asylo
 
+/* ----------------------- Convert hex string to uint8 ---------------------- */
 uint8_t *hex_str_to_uint8(const char *string)
 {
 
@@ -227,17 +178,129 @@ uint8_t *hex_str_to_uint8(const char *string)
 
   return data;
 }
-std::string hexStringSwap(std::string little)
+/* ------------------------ Swap endian of hex string ----------------------- */
+// std::string hexStringSwap(std::string little)
+// {
+//   std::string input = little;
+
+//   LOG(INFO) << "Input Signature: " << input;
+
+//   std::reverse(input.begin(), input.end());
+//   for (auto it = input.begin(); it != input.end(); it += 2)
+//   {
+//     std::swap(it[0], it[1]);
+//   }
+
+//   return input;
+// }
+
+/* ----------------- Check signature of raw IoT data batches ---------------- */
+int verifySignature(uint8_t *x, uint8_t *y, std::string signature, uint8_t *signaturePointer, uint8_t *finalHash)
 {
-  std::string input = little;
+  EC_KEY *publicKey = EC_KEY_new();
+  EC_GROUP *ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+  int set_group_status = EC_KEY_set_group(publicKey, ecgroup);
 
-  LOG(INFO) << "Input Signature: " << input;
+  BIGNUM *xBig = BN_new();
+  BIGNUM *yBig = BN_new();
 
-  std::reverse(input.begin(), input.end());
-  for (auto it = input.begin(); it != input.end(); it += 2)
+  BIGNUM *xBigResult = BN_bin2bn(x, 32, xBig);
+  BIGNUM *yBigResult = BN_bin2bn(y, 32, yBig);
+
+  int createKey = EC_KEY_set_public_key_affine_coordinates(publicKey, xBig, yBig);
+
+  LOG(INFO) << "Key generation: " << createKey;
+
+  ECDSA_SIG *signatureDer = ECDSA_SIG_from_bytes(signaturePointer, (signature.length() / 2));
+  if (signatureDer == NULL)
   {
-    std::swap(it[0], it[1]);
+    LOG(INFO) << "Error while signature deserialization";
   }
 
-  return input;
+  int validation = ECDSA_do_verify(finalHash, 32, signatureDer, publicKey);
+
+  EC_KEY_free(publicKey);
+  ECDSA_SIG_free(signatureDer);
+
+  LOG(INFO) << "ECDSA result: " << validation;
+  return validation;
+}
+
+/* -------------------- Hash Id for privacy on blockchain ------------------- */
+std::string enryptId(std::string input)
+{
+
+  std::string output;
+
+  char const *hashByteCrypt = input.c_str();
+  SHA256_CTX contextId;
+  uint8_t finalHashId[32];
+  int resultPrep = SHA256_Init(&contextId);
+  SHA256_Update(&contextId, hashByteCrypt, strlen(hashByteCrypt));
+  int hashVal = SHA256_Final(finalHashId, &contextId);
+
+  for (int i : finalHashId)
+  {
+    output += std::to_string(i);
+  }
+  return output;
+}
+
+/* ----------------------- Sign processed data batches (Depends on power iend only!) ---------------------- */
+std::string signBatch(std::string toSign, uint8_t *privateKey)
+{
+
+  LOG(INFO) << "Input String: " << toSign;
+  // hash concatenated input string
+  std::string output;
+  char const *hashByteBatch = toSign.c_str();
+  SHA256_CTX context;
+  uint8_t finalHashId[32];
+  int resultPrep = SHA256_Init(&context);
+  SHA256_Update(&context, hashByteBatch, strlen(hashByteBatch));
+  int hashVal = SHA256_Final(finalHashId, &context);
+
+  EC_KEY *privateEC = EC_KEY_new();
+  EC_GROUP *ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+  int set_group_status = EC_KEY_set_group(privateEC, ecgroup);
+
+  BIGNUM *privateBig = BN_new();
+  BIGNUM *privateBigResult = BN_bin2bn(privateKey, 32, privateBig);
+
+  int test = EC_KEY_set_private_key(privateEC, privateBig);
+
+  // Allocate space for signature
+  // uint8_t *signBytes = new uint8_t[100];
+  // unsigned int *signLength;
+
+  // int resultSign = ECDSA_sign(0, &finalHashId[0], 32, signBytes, signLength, privateEC);
+
+  // LOG(INFO) << "Result Sign" << resultSign;
+
+  //  LOG(INFO) << "Length of signature: " << *signLength;
+
+  // std::string s = "";
+  // std::ostringstream oss;
+  // oss << std::setfill('0');
+
+  // for (int i = 0; i < *signLength; i++)
+  // {
+  //   oss << std::setw(2) << std::hex << (int)(*signBytes + i);
+  // }
+
+  ECDSA_SIG *resultSignature = ECDSA_do_sign(&finalHashId[0], 32, privateEC);
+
+  char *r = BN_bn2hex(resultSignature->r);
+  char *s = BN_bn2hex(resultSignature->s);
+
+  output.append(r);
+  output.append(s);
+  output.append("01");
+
+  LOG(INFO) << "Resulting signature: " << output;
+  // output = oss.str();
+
+  EC_KEY_free(privateEC);
+  // delete[] signBytes;
+  return output;
 }

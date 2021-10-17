@@ -48,14 +48,6 @@ print("Der signing key: " + signer.to_der().hex())
 
 def serialize(batch):
 
-    # swap endian for TEE
-    # print("Original hash: " + batch.hash)
-    # endianSwapHash = ""
-    # for j in range(0, len(batch.hash), 2):
-    #     endianSwapHash += (batch.hash[j:j+2])[::-1]
-    # print("Swapped hash: " + endianSwapHash)
-    # batch.hash = endianSwapHash
-
     print(batch)
 
     result = batch.SerializeToString()
@@ -71,7 +63,6 @@ def hashBatch(valueChain):
 
 
 def signHash(hash):
-    # return signer.sign(bytes.fromhex(hash), sigencode=sigencode_der).hex()
     return signer.sign_deterministic((str.encode(hash)), sigencode=sigencode_der).hex()
 
 

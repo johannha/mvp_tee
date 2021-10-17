@@ -1,0 +1,30 @@
+#!/bin/bash
+
+cd ../bc_client/
+npm run serve
+sleep 5
+echo "Blockchain Client was started"
+cd ../tee/
+docker run -it --rm \
+    -v bazel-cache:/root/.cache/bazel \
+    -v "/Users/johannHartmann 1/Documents/Code/mvp_tee/tee":/opt/my-project \
+    -v "/Users/johannhartmann 1/Documents/Code/mvp_tee/workload_generator/output":/wg/output \
+    -v "/Users/johannhartmann 1/Documents/Code/mvp_tee/tee/output":/tee/output \
+    -w /opt/my-project \
+    gcr.io/asylo-framework/asylo \
+    bazel run //hello_world:hello_world_sgx_sim
+echo "Trusted Execution started and awaits packages"
+sleep 5
+cd ../workload_generator/
+echo "Workload Generator is started in: "
+for (( c=10; c>0; c-- ))
+do  
+   echo "$c Seconds"
+   sleep 1
+done
+python3 workgen.py -s 5 -a 10 -t 60
+echo "Data batches successfully generated!"
+echo "Stopping Node Server right now"
+
+killall node
+
