@@ -6,7 +6,7 @@ const addresses = {
 };
 
 const scAddresses = {
-  1: "0x04fF4ebb67779250E7354FA0e0eaa37e385762A0",
+  1: "0x8DCCa8436d16a7EEa4A1B0fdA57feA5ED3813b07",
 };
 
 const abi = {
@@ -29,9 +29,9 @@ const abi = {
       name: "dataMap",
       outputs: [
         {
-          internalType: "bytes",
+          internalType: "string",
           name: "_signature",
-          type: "bytes",
+          type: "string",
         },
         {
           internalType: "string",
@@ -76,6 +76,21 @@ const abi = {
     {
       constant: true,
       inputs: [],
+      name: "signLength",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      payable: false,
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      constant: true,
+      inputs: [],
       name: "testString",
       outputs: [
         {
@@ -92,9 +107,9 @@ const abi = {
       constant: false,
       inputs: [
         {
-          internalType: "bytes",
+          internalType: "string",
           name: "_signature",
-          type: "bytes",
+          type: "string",
         },
         {
           internalType: "string",

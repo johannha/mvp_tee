@@ -1,0 +1,10 @@
+#!/bin/bash
+cd ../workload_generator/
+echo "Workload Generator is started in: "
+for (( c=5; c>0; c-- ))
+do  
+   echo "$c Seconds"
+   sleep 1
+done
+python3 workgen.py -s 5 -a 10 -t 60
+echo -e  "\033[0;32mData batches successfully generated!"

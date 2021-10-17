@@ -110,7 +110,7 @@ public:
         {
           double power = input.GetExtension(hello_world::parsed_input).data(i).pavg();
 
-          if (power > 100)
+          if (power > 130)
           {
             std::string hashedId = enryptId(input.GetExtension(hello_world::parsed_input).data(i).mid());
             // remote attestation faker: depens on iend only

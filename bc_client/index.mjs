@@ -11,9 +11,13 @@ const port = 3000;
 // data read
 var dataCount = 0;
 
+// gas costs watcher
+var totalGas = 0;
+
 // set up web3
 const rpcServer = "HTTP://127.0.0.1:7545";
 const web3 = new Web3(rpcServer);
+var BN = web3.utils.BN;
 
 // get balance of account
 async function getBalance(accountNumber) {
@@ -57,7 +61,7 @@ async function forwardData(data) {
 
   let parsedObject = dataJS.teeData.deserializeBinary(rawData);
 
-  let signature = "0x" + parsedObject.getSignature();
+  let signature = parsedObject.getSignature();
   let mid = String(parsedObject.getMid());
   let pavg = parseInt(parsedObject.getPavg());
   let iend = parseInt(parsedObject.getIend());
@@ -66,21 +70,28 @@ async function forwardData(data) {
   // hex string to byte array
   let iend_string = String(iend);
   //let signature_byte = web3.utils.hexToBytes(signature);
-  let signature_byte = hexToBytes(signature);
-  console.log(signature_byte);
 
   console.log("The received Power: " + parsedObject.getPavg());
+
+  signature = "0x" + signature;
+
+  // console.log(web3.utils.isHex(signature));
+
+  // let final = web3.utils.hexToBytes(signature);
+  // console.log(final);
 
   // add to smart contract
   let contract = new web3.eth.Contract(abi[1], scAddresses[1], {
     from: addresses[1],
     gas: 6721975,
   });
-  contract.methods
-    .addData(signature_byte, mid, pavg, iend_string)
+  let tx = contract.methods
+    .addData(signature, mid, pavg, iend_string)
     .send({ from: addresses[1] })
     .on("receipt", (hash) => {
+      totalGas += hash.gasUsed;
       console.log(hash);
+      console.log("Total Gas used: " + totalGas);
       return 0;
     });
 }
@@ -98,7 +109,7 @@ async function readString() {
 async function readDataMap() {
   let temp;
   let contract = new web3.eth.Contract(abi[1], scAddresses[1]);
-  await contract.methods.dataMap(1).call((err, result) => {
+  await contract.methods.dataMap(0).call((err, result) => {
     console.log(result);
     temp = result;
   });
